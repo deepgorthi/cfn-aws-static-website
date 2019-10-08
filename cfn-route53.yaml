@@ -1,0 +1,49 @@
+{
+  "AWSTemplateFormatVersion" : "2010-09-09",
+
+  "Description" : "AWS CloudFormation Template Route53_CNAME: template showing how to create an Amazon Route 53 CNAME record.  It assumes that you already have a Hosted Zone registered with Amazon Route 53. **WARNING** This template creates one or more AWS resources. You will be billed for the AWS resources used if you create a stack from this template.",
+
+  "Parameters" : {
+    "HostedZone" : {
+      "Type" : "String",
+      "Description" : "The DNS name of an existing Amazon Route 53 hosted zone",
+      "AllowedPattern" : "(?!-)[a-zA-Z0-9-.]{1,63}(?<!-)",
+      "ConstraintDescription" : "must be a valid DNS zone name."
+    },
+    "RecordNameforACM" : {
+      "Type" : "String",
+      "Description" : "The Record Name of Naked Domain name",
+      "ConstraintDescription" : "must be a valid DNS zone name."
+    }
+  },
+
+  "Resources" : {
+    "MyDNSRecord" : {
+      "Type" : "AWS::Route53::RecordSet",
+      "Properties" : {
+        "HostedZoneName" : { "Fn::Join" : [ "", [{"Ref" : "HostedZone"}, "." ]]},
+        "Comment" : "CNAME redirect to ACM validation",
+        "Name" : { "Fn::Join" : [ "", [{"Ref" : "RecordNameforACM"}, ".", {"Ref" : "HostedZone"}, "."]]},
+        "Type" : "CNAME",
+        "TTL" : "900",
+        "ResourceRecords" : ["aws.amazon.com"]
+      }
+    },
+    "CertificateDNSRecord": {
+    "Type": "Custom::CertificateDNSRecord",
+    "Properties": {
+      "CertificateArn": {"Ref": "Certificate"},
+      "DomainName": {"Ref": "DomainName"},
+      "ServiceToken": {"Fn::Sub": 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:binxio-cfn-certificate-provider'}
+    }
+      
+    }
+    
+  },
+  "Outputs" : {
+    "CNAME" : {
+      "Description" : "Fully qualified domain name",
+      "Value" : { "Ref" : "MyDNSRecord" }
+    }
+  }
+}
