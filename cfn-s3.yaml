@@ -51,18 +51,16 @@ Resources:
         IndexDocument: index.html
         ErrorDocument: 404.html
     DeletionPolicy: Retain
-  WWWBucket:
-  Type: AWS::S3::Bucket
-  DependsOn:
-  - WebsiteBucket
-  Properties:
-    BucketName: !Sub
-        - www.${Domain}
-        - Domain: !Ref DomainName
-    AccessControl: BucketOwnerFullControl
-    WebsiteConfiguration:
-      RedirectAllRequestsTo:
-        HostName: !Ref WebsiteBucket
+  # WWWBucket:
+  #   Type: AWS::S3::Bucket
+  #   Properties:
+  #     BucketName: !Sub
+  #     - www.${Domain}
+  #     - Domain: !Ref DomainName
+  #     AccessControl: BucketOwnerFullControl
+  #     WebsiteConfiguration:
+  #       RedirectAllRequestsTo:
+  #         HostName: !Ref WebsiteBucket
   WebsiteBucketPolicy:
     Type: AWS::S3::BucketPolicy
     Properties:
@@ -76,13 +74,11 @@ Resources:
           Resource: !Join ['', ['arn:aws:s3:::', !Ref 'WebsiteBucket', /*]]
   WebsiteCloudfront:
     Type: AWS::CloudFront::Distribution
-    DependsOn:
-    - WebsiteBucket
     Properties:
       DistributionConfig:
         Comment: Cloudfront Distribution pointing to S3 bucket
         Origins:
-          - DomainName: !Select [2, !Split ["/", !GetAtt WebsiteBucket.WebsiteURL]]
+        - DomainName: !Select [2, !Split ["/", !GetAtt WebsiteBucket.WebsiteURL]]
           Id: S3Origin
           CustomOriginConfig:
             HTTPPort: '80'
